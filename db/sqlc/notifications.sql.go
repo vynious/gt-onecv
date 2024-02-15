@@ -30,13 +30,13 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 }
 
 const getEligibleRecipients = `-- name: GetEligibleRecipients :many
-SELECT DISTINCT s.id, s.name, s.email
+SELECT DISTINCT s.email
 FROM students s
 WHERE NOT s.is_suspended
   AND (
     s.id IN (
         SELECT e.student_id
-        FROM enrollments e
+        FROM registrations  e
                  JOIN teachers t ON e.teacher_id = t.id
         WHERE t.email = $1
     )
@@ -49,25 +49,19 @@ type GetEligibleRecipientsParams struct {
 	Email_2 string
 }
 
-type GetEligibleRecipientsRow struct {
-	ID    int32
-	Name  string
-	Email string
-}
-
-func (q *Queries) GetEligibleRecipients(ctx context.Context, arg GetEligibleRecipientsParams) ([]GetEligibleRecipientsRow, error) {
+func (q *Queries) GetEligibleRecipients(ctx context.Context, arg GetEligibleRecipientsParams) ([]string, error) {
 	rows, err := q.db.Query(ctx, getEligibleRecipients, arg.Email, arg.Email_2)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetEligibleRecipientsRow
+	var items []string
 	for rows.Next() {
-		var i GetEligibleRecipientsRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.Email); err != nil {
+		var email string
+		if err := rows.Scan(&email); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, email)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

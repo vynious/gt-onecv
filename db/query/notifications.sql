@@ -8,13 +8,13 @@ returning *;
 
 
 -- name: GetEligibleRecipients :many
-SELECT DISTINCT s.id, s.name, s.email
+SELECT DISTINCT s.email
 FROM students s
 WHERE NOT s.is_suspended
   AND (
     s.id IN (
         SELECT e.student_id
-        FROM enrollments e
+        FROM registrations  e
                  JOIN teachers t ON e.teacher_id = t.id
         WHERE t.email = $1
     )

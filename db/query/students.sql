@@ -19,10 +19,10 @@ from students
 where id = $1;
 
 
--- name: UpdateStudentSuspension :one
+-- name: UpdateStudentSuspensionByEmail :one
 update students
 set is_suspended = $2
-where id = $1
+where email = $1
 returning *;
 
 -- name: UpdateStudentEmail :one

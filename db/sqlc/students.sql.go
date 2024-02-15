@@ -121,20 +121,20 @@ func (q *Queries) UpdateStudentEmail(ctx context.Context, arg UpdateStudentEmail
 	return i, err
 }
 
-const updateStudentSuspension = `-- name: UpdateStudentSuspension :one
+const updateStudentSuspensionByEmail = `-- name: UpdateStudentSuspensionByEmail :one
 update students
 set is_suspended = $2
-where id = $1
+where email = $1
 returning id, name, email, is_suspended
 `
 
-type UpdateStudentSuspensionParams struct {
-	ID          int32
+type UpdateStudentSuspensionByEmailParams struct {
+	Email       string
 	IsSuspended bool
 }
 
-func (q *Queries) UpdateStudentSuspension(ctx context.Context, arg UpdateStudentSuspensionParams) (Student, error) {
-	row := q.db.QueryRow(ctx, updateStudentSuspension, arg.ID, arg.IsSuspended)
+func (q *Queries) UpdateStudentSuspensionByEmail(ctx context.Context, arg UpdateStudentSuspensionByEmailParams) (Student, error) {
+	row := q.db.QueryRow(ctx, updateStudentSuspensionByEmail, arg.Email, arg.IsSuspended)
 	var i Student
 	err := row.Scan(
 		&i.ID,

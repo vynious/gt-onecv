@@ -6,16 +6,16 @@ package sqlc
 
 import ()
 
-type Enrollment struct {
-	ID        int32
-	StudentID int32
-	TeacherID int32
-}
-
 type Notification struct {
 	ID        int32
 	TeacherID int32
 	Content   string
+}
+
+type Registration struct {
+	ID        int32
+	StudentID int32
+	TeacherID int32
 }
 
 type Student struct {

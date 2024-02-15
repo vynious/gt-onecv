@@ -17,7 +17,7 @@ CREATE TABLE students (
 
 CREATE INDEX idx_students_email ON students(email);
 
-CREATE TABLE enrollments (
+CREATE TABLE registrations (
                              id SERIAL PRIMARY KEY,
                              student_id INT NOT NULL,
                              teacher_id INT NOT NULL,
@@ -37,6 +37,6 @@ CREATE TABLE notifications (
 -- +goose Down
 
 DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS enrollments;
+DROP TABLE IF EXISTS registration;
 DROP TABLE IF EXISTS students;
 DROP TABLE IF EXISTS teachers;
