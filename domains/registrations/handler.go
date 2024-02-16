@@ -11,11 +11,6 @@ type RegistrationHandler struct {
 	*RegistrationService
 }
 
-type RegisterStudentsRequest struct {
-	Teacher  string   `json:"teacher"`
-	Students []string `json:"students"`
-}
-
 func SpawnRegistrationHandler(rs *RegistrationService) *RegistrationHandler {
 	return &RegistrationHandler{
 		rs,
@@ -23,7 +18,10 @@ func SpawnRegistrationHandler(rs *RegistrationService) *RegistrationHandler {
 }
 
 func (rh *RegistrationHandler) RegisterStudents(c *gin.Context) {
-	var requestBody RegisterStudentsRequest
+	var requestBody struct {
+		Teacher  string   `json:"teacher"`
+		Students []string `json:"students"`
+	}
 
 	// Attempt to bind the incoming JSON payload to the struct
 	if err := c.BindJSON(&requestBody); err != nil {

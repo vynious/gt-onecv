@@ -11,10 +11,6 @@ type StudentHandler struct {
 	*StudentService
 }
 
-type SuspendStudentRequest struct {
-	Student string `json:"student"`
-}
-
 func SpawnStudentHandler(ss *StudentService) *StudentHandler {
 	return &StudentHandler{
 		ss,
@@ -22,7 +18,9 @@ func SpawnStudentHandler(ss *StudentService) *StudentHandler {
 }
 
 func (sh *StudentHandler) SuspendStudent(c *gin.Context) {
-	var requestBody SuspendStudentRequest
+	var requestBody struct {
+		Student string `json:"student"`
+	}
 	if err := c.BindJSON(&requestBody); err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusBadRequest, utils.NewAPIError(utils.ErrInvalidRequestBody))

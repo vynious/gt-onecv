@@ -199,6 +199,7 @@ func (s *RegistrationServiceSuite) TestGetCommonRegistrationsByTEmailsSuccess() 
 	commonEmails, err := s.RegistrationService.GetCommonRegistrationsByTEmails(ctx, teacherEmails)
 	s.NoError(err)
 	s.Contains(commonEmails, commonStudentEmail, "The returned common student emails should include the one we set up")
+	s.TearDownTest()
 }
 
 func (s *RegistrationServiceSuite) createTeacher(ctx context.Context, name, email string) {
