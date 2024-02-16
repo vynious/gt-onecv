@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// Define custom errors for various scenarios
+// custom errors for various scenarios
 var (
 	ErrMissingTeacherEmail      = errors.New("no teacher email provided")
 	ErrMissingStudentEmail      = errors.New("no student emails provided")

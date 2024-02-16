@@ -23,14 +23,12 @@ func TestNotificationServiceSuite(t *testing.T) {
 }
 
 func (s *NotificationServiceSuite) SetupSuite() {
-	// Connect to the database
 	var err error
 	s.DB, err = pgxpool.New(context.Background(), os.Getenv("DATABASE_TEST_URL"))
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Create schema
 	schemaStatements := []string{
 		`CREATE TABLE IF NOT EXISTS teachers (
             id SERIAL PRIMARY KEY,
@@ -68,7 +66,6 @@ func (s *NotificationServiceSuite) SetupSuite() {
 		}
 	}
 
-	// Initialize the RegistrationService
 	database := db.SpawnRepository(s.DB)
 	s.NotificationService = notifications.SpawnNotificationService(database)
 }
@@ -153,11 +150,8 @@ func (s *NotificationServiceSuite) TestGetNotifiableStudentsSuccess() {
 	teacherEmail := "teachera@example.com"
 	content := "Hello students! [student1@example.com]"
 
-	// Setup data for a teacher and students, including creating relationships
-
 	s.createRegistration(ctx, teacherEmail, "student1@example.com")
 
-	// Execute the method
 	notifiableEmails, err := s.NotificationService.GetNotifiableStudents(ctx, teacherEmail, content)
 	s.NoError(err)
 	s.Len(notifiableEmails, 1, "There should be one notifiable student")
@@ -203,7 +197,6 @@ func TestExtractEmails(t *testing.T) {
 }
 
 func (s *NotificationServiceSuite) createRegistration(ctx context.Context, teacherEmail, studentEmail string) {
-	// This function assumes the teacher and student already exist and creates a registration between them.
 	_, err := s.DB.Exec(ctx, `INSERT INTO registrations (student_id, teacher_id) 
 	SELECT s.id, t.id FROM students s, teachers t WHERE s.email = $1 AND t.email = $2;`, studentEmail, teacherEmail)
 	if err != nil {

@@ -30,11 +30,9 @@ func (ns *NotificationService) GetNotifiableStudents(ctx context.Context, teache
 
 	extractedEmails := ExtractEmails(content)
 
-	// Combine and deduplicate emails
-	emailSet := make(map[string]struct{}) // Using a map as a set
+	emailSet := make(map[string]struct{})
 	var uniqueEmails []string
 
-	// Add student emails to the set
 	for _, email := range studentEmails {
 		if _, exists := emailSet[email]; !exists {
 			emailSet[email] = struct{}{}
@@ -42,7 +40,6 @@ func (ns *NotificationService) GetNotifiableStudents(ctx context.Context, teache
 		}
 	}
 
-	// Add extracted emails to the set, if not already present
 	for _, email := range extractedEmails {
 		if _, exists := emailSet[email]; !exists {
 			uniqueEmails = append(uniqueEmails, email)

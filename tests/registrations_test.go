@@ -24,14 +24,12 @@ func TestRegistrationServiceSuite(t *testing.T) {
 }
 
 func (s *RegistrationServiceSuite) SetupSuite() {
-	// Connect to the database
 	var err error
 	s.DB, err = pgxpool.New(context.Background(), os.Getenv("DATABASE_TEST_URL"))
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Create schema
 	schemaStatements := []string{
 		`CREATE TABLE IF NOT EXISTS teachers (
             id SERIAL PRIMARY KEY,
@@ -69,7 +67,6 @@ func (s *RegistrationServiceSuite) SetupSuite() {
 		}
 	}
 
-	// Initialize the RegistrationService
 	database := db.SpawnRepository(s.DB)
 	s.RegistrationService = registrations.SpawnRegistrationService(database)
 }
@@ -172,12 +169,10 @@ func (s *RegistrationServiceSuite) TestGetRegistrationsByTEmailSuccess() {
 	teacherEmail := "teachera@example.com"
 	studentEmail := "student1@example.com"
 
-	// Set up specific data for this test
 	s.createTeacher(ctx, "Teacher A", teacherEmail)
 	s.createStudent(ctx, "Student 1", studentEmail, false)
 	s.createRegistration(ctx, teacherEmail, studentEmail)
 
-	// Execute the test
 	studentEmails, err := s.RegistrationService.GetRegistrationsByTEmail(ctx, teacherEmail)
 	s.NoError(err)
 	s.Contains(studentEmails, studentEmail, "The returned student emails should include the one we set up")
@@ -188,14 +183,12 @@ func (s *RegistrationServiceSuite) TestGetCommonRegistrationsByTEmailsSuccess() 
 	teacherEmails := []string{"teachera@example.com", "teacherb@example.com"}
 	commonStudentEmail := "commonstudent@example.com"
 
-	// Set up specific data for this test
 	s.createTeacher(ctx, "Teacher A", teacherEmails[0])
 	s.createTeacher(ctx, "Teacher B", teacherEmails[1])
 	s.createStudent(ctx, "Common Student", commonStudentEmail, false)
 	s.createRegistration(ctx, teacherEmails[0], commonStudentEmail)
 	s.createRegistration(ctx, teacherEmails[1], commonStudentEmail)
 
-	// Execute the test
 	commonEmails, err := s.RegistrationService.GetCommonRegistrationsByTEmails(ctx, teacherEmails)
 	s.NoError(err)
 	s.Contains(commonEmails, commonStudentEmail, "The returned common student emails should include the one we set up")
@@ -217,7 +210,6 @@ func (s *RegistrationServiceSuite) createStudent(ctx context.Context, name, emai
 }
 
 func (s *RegistrationServiceSuite) createRegistration(ctx context.Context, teacherEmail, studentEmail string) {
-	// This function assumes the teacher and student already exist and creates a registration between them.
 	_, err := s.DB.Exec(ctx, `INSERT INTO registrations (student_id, teacher_id) 
 	SELECT s.id, t.id FROM students s, teachers t WHERE s.email = $1 AND t.email = $2;`, studentEmail, teacherEmail)
 	if err != nil {

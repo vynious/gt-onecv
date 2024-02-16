@@ -91,7 +91,6 @@ func (rs *RegistrationService) GetCommonRegistrationsByTEmails(ctx context.Conte
 		if emailCounts[email] == len(teacherEmails) {
 			commonEmails = append(commonEmails, email)
 			emailCounts[email] = -1
-			// Ensure we don't add duplicates
 		}
 	}
 

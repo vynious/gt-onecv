@@ -23,14 +23,12 @@ func TestStudentServiceSuite(t *testing.T) {
 }
 
 func (s *StudentServiceSuite) SetupSuite() {
-	// Connect to the database
 	var err error
 	s.DB, err = pgxpool.New(context.Background(), os.Getenv("DATABASE_TEST_URL"))
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Create schema
 	schemaStatements := []string{
 		`CREATE TABLE IF NOT EXISTS teachers (
             id SERIAL PRIMARY KEY,
@@ -68,7 +66,6 @@ func (s *StudentServiceSuite) SetupSuite() {
 		}
 	}
 
-	// Initialize the RegistrationService
 	database := db.SpawnRepository(s.DB)
 	s.StudentService = students.SpawnStudentService(database)
 }
@@ -152,7 +149,6 @@ func (s *StudentServiceSuite) TestChangeStudentSuspensionStatusSuspend() {
 	ctx := context.Background()
 	studentEmail := "student1@example.com"
 
-	// Attempt to suspend the student
 	student, err := s.StudentService.ChangeStudentSuspensionStatus(ctx, studentEmail, true)
 	s.NoError(err)
 	s.True(student.IsSuspended, "The student should be suspended")
@@ -162,7 +158,6 @@ func (s *StudentServiceSuite) TestChangeStudentSuspensionStatusUnsuspend() {
 	ctx := context.Background()
 	studentEmail := "student2@example.com"
 
-	// Attempt to unsuspend the student
 	student, err := s.StudentService.ChangeStudentSuspensionStatus(ctx, studentEmail, false)
 	s.NoError(err)
 	s.False(student.IsSuspended, "The student should not be suspended")
@@ -172,7 +167,6 @@ func (s *StudentServiceSuite) TestChangeStudentSuspensionStatusStudentNotFound()
 	ctx := context.Background()
 	studentEmail := "nonexistentstudent@example.com"
 
-	// Attempt to change suspension status for a non-existing student
 	_, err := s.StudentService.ChangeStudentSuspensionStatus(ctx, studentEmail, true)
 	s.Error(err, "Should return an error for a non-existing student")
 }
