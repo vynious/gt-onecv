@@ -2,8 +2,8 @@ package notifications
 
 import (
 	"context"
-	"fmt"
 	"github.com/vynious/gt-onecv/db"
+	"github.com/vynious/gt-onecv/utils"
 	"regexp"
 )
 
@@ -17,39 +17,41 @@ func SpawnNotificationService(db *db.Repository) *NotificationService {
 	}
 }
 
-func (ns *NotificationService) GetNotifiableStudents(ctx context.Context, tEmail, content string) ([]string, error) {
+func (ns *NotificationService) GetNotifiableStudents(ctx context.Context, teacherEmail, content string) ([]string, error) {
 
-	// Get distinct unsuspended students' email addresses registered under the teacher
-	registeredStudents, err := ns.Queries.GetUnsuspendedRegistrationsByTeacherEmail(ctx, tEmail)
+	existingTeacher, err := ns.Queries.GetTeacherByEmail(ctx, teacherEmail)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get unsuspended students under teacher: %w", err)
+		return nil, utils.ErrTeacherNotFound
+	}
+	studentEmails, err := ns.Queries.GetNotSuspendedStudentEmailsUnderTeacherId(ctx, existingTeacher.ID)
+	if err != nil {
+		return nil, utils.ErrStudentNotFound
 	}
 
-	// Initialize the recipients with the registered students
-	recipients := make([]string, len(registeredStudents))
-	copy(recipients, registeredStudents)
+	extractedEmails := ExtractEmails(content)
 
-	// Extract mentioned student emails from the notification content
-	mentionedEmails := extractEmails(content)
+	// Combine and deduplicate emails
+	emailSet := make(map[string]struct{}) // Using a map as a set
+	var uniqueEmails []string
 
-	// Create a map from the recipients slice for quick lookup
-	uniqueRecipients := make(map[string]bool, len(recipients))
-	for _, email := range recipients {
-		uniqueRecipients[email] = true
-	}
-
-	// Check the extracted emails against the map and add them if they are not duplicates
-	for _, email := range mentionedEmails {
-		if !uniqueRecipients[email] {
-			recipients = append(recipients, email)
-			uniqueRecipients[email] = true // Mark this email as seen
+	// Add student emails to the set
+	for _, email := range studentEmails {
+		if _, exists := emailSet[email]; !exists {
+			emailSet[email] = struct{}{}
+			uniqueEmails = append(uniqueEmails, email)
 		}
 	}
 
-	return recipients, nil
+	// Add extracted emails to the set, if not already present
+	for _, email := range extractedEmails {
+		if _, exists := emailSet[email]; !exists {
+			uniqueEmails = append(uniqueEmails, email)
+		}
+	}
+	return uniqueEmails, nil
 }
 
-func extractEmails(input string) []string {
+func ExtractEmails(input string) []string {
 	emailRegex := regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)
 	return emailRegex.FindAllString(input, -1)
 }

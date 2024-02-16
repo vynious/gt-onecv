@@ -9,43 +9,15 @@ import (
 	"context"
 )
 
-const createRegistration = `-- name: CreateRegistration :one
-INSERT INTO registrations (teacher_id, student_id)
-SELECT t.id, s.id
-FROM teachers t, students s
-WHERE t.email = $1 AND s.email = $2
-    RETURNING id, student_id, teacher_id
-`
-
-type CreateRegistrationParams struct {
-	Email   string
-	Email_2 string
-}
-
-func (q *Queries) CreateRegistration(ctx context.Context, arg CreateRegistrationParams) (Registration, error) {
-	row := q.db.QueryRow(ctx, createRegistration, arg.Email, arg.Email_2)
-	var i Registration
-	err := row.Scan(&i.ID, &i.StudentID, &i.TeacherID)
-	return i, err
-}
-
-const getCommonRegistrationsByTeachersEmail = `-- name: GetCommonRegistrationsByTeachersEmail :many
+const getNotSuspendedStudentEmailsUnderTeacherId = `-- name: GetNotSuspendedStudentEmailsUnderTeacherId :many
 SELECT s.email
 FROM students s
          JOIN registrations r ON s.id = r.student_id
-         JOIN teachers t ON t.id = r.teacher_id
-WHERE t.email = ANY($1)
-GROUP BY s.id
-HAVING COUNT(DISTINCT t.id) = $2
+WHERE r.teacher_id = $1 AND s.is_suspended = FALSE
 `
 
-type GetCommonRegistrationsByTeachersEmailParams struct {
-	Email string
-	ID    int32
-}
-
-func (q *Queries) GetCommonRegistrationsByTeachersEmail(ctx context.Context, arg GetCommonRegistrationsByTeachersEmailParams) ([]string, error) {
-	rows, err := q.db.Query(ctx, getCommonRegistrationsByTeachersEmail, arg.Email, arg.ID)
+func (q *Queries) GetNotSuspendedStudentEmailsUnderTeacherId(ctx context.Context, teacherID int32) ([]string, error) {
+	rows, err := q.db.Query(ctx, getNotSuspendedStudentEmailsUnderTeacherId, teacherID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,16 +36,15 @@ func (q *Queries) GetCommonRegistrationsByTeachersEmail(ctx context.Context, arg
 	return items, nil
 }
 
-const getRegistrationsByTeacherEmail = `-- name: GetRegistrationsByTeacherEmail :many
+const getStudentEmailsByTeacherId = `-- name: GetStudentEmailsByTeacherId :many
 SELECT s.email
-FROM registrations e
-         JOIN students s ON e.student_id = s.id
-         JOIN teachers t ON e.teacher_id = t.id
-WHERE t.email = $1
+FROM students s
+    JOIN registrations r ON s.id = r.student_id
+WHERE r.teacher_id = $1
 `
 
-func (q *Queries) GetRegistrationsByTeacherEmail(ctx context.Context, email string) ([]string, error) {
-	rows, err := q.db.Query(ctx, getRegistrationsByTeacherEmail, email)
+func (q *Queries) GetStudentEmailsByTeacherId(ctx context.Context, teacherID int32) ([]string, error) {
+	rows, err := q.db.Query(ctx, getStudentEmailsByTeacherId, teacherID)
 	if err != nil {
 		return nil, err
 	}
@@ -92,30 +63,47 @@ func (q *Queries) GetRegistrationsByTeacherEmail(ctx context.Context, email stri
 	return items, nil
 }
 
-const getUnsuspendedRegistrationsByTeacherEmail = `-- name: GetUnsuspendedRegistrationsByTeacherEmail :many
-SELECT s.email
-FROM registrations e
-         JOIN students s ON e.student_id = s.id
-         JOIN teachers t ON e.teacher_id = t.id
-WHERE t.email = $1 and s.is_suspended = false
+const getStudentsUnderTeacher = `-- name: GetStudentsUnderTeacher :many
+select student_id
+from registrations
+where teacher_id = $1
 `
 
-func (q *Queries) GetUnsuspendedRegistrationsByTeacherEmail(ctx context.Context, email string) ([]string, error) {
-	rows, err := q.db.Query(ctx, getUnsuspendedRegistrationsByTeacherEmail, email)
+func (q *Queries) GetStudentsUnderTeacher(ctx context.Context, teacherID int32) ([]int32, error) {
+	rows, err := q.db.Query(ctx, getStudentsUnderTeacher, teacherID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []int32
 	for rows.Next() {
-		var email string
-		if err := rows.Scan(&email); err != nil {
+		var student_id int32
+		if err := rows.Scan(&student_id); err != nil {
 			return nil, err
 		}
-		items = append(items, email)
+		items = append(items, student_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return items, nil
+}
+
+const registerStudentUnderTeacher = `-- name: RegisterStudentUnderTeacher :one
+insert into registrations
+(teacher_id, student_id)
+values ($1, $2)
+returning id, student_id, teacher_id
+`
+
+type RegisterStudentUnderTeacherParams struct {
+	TeacherID int32
+	StudentID int32
+}
+
+func (q *Queries) RegisterStudentUnderTeacher(ctx context.Context, arg RegisterStudentUnderTeacherParams) (Registration, error) {
+	row := q.db.QueryRow(ctx, registerStudentUnderTeacher, arg.TeacherID, arg.StudentID)
+	var i Registration
+	err := row.Scan(&i.ID, &i.StudentID, &i.TeacherID)
+	return i, err
 }

@@ -2,6 +2,8 @@ package students
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/vynious/gt-onecv/utils"
+	"log"
 	"net/http"
 )
 
@@ -10,7 +12,7 @@ type StudentHandler struct {
 }
 
 type SuspendStudentRequest struct {
-	student string
+	Student string `json:"student"`
 }
 
 func SpawnStudentHandler(ss *StudentService) *StudentHandler {
@@ -22,12 +24,21 @@ func SpawnStudentHandler(ss *StudentService) *StudentHandler {
 func (sh *StudentHandler) SuspendStudent(c *gin.Context) {
 	var requestBody SuspendStudentRequest
 	if err := c.BindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
+		log.Println(err.Error())
+		c.JSON(http.StatusBadRequest, utils.NewAPIError(utils.ErrInvalidRequestBody))
+		return
 	}
-	studentEmail := requestBody.student
+	studentEmail := requestBody.Student
+	if studentEmail == "" {
+		log.Println("Error: No student email provided")
+		c.JSON(http.StatusBadRequest, utils.NewAPIError(utils.ErrMissingStudentEmail))
+		return
+	}
 	_, err := sh.ChangeStudentSuspensionStatus(c.Request.Context(), studentEmail, true)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, utils.NewAPIError(err))
+		return
 	}
-	c.JSON(http.StatusNoContent, gin.H{"message": "successfully suspended student"})
+	c.Status(http.StatusNoContent)
 }

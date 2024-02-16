@@ -34,14 +34,14 @@ func (q *Queries) CreateStudent(ctx context.Context, arg CreateStudentParams) (S
 	return i, err
 }
 
-const deleteStudent = `-- name: DeleteStudent :one
-delete from students
-where id = $1
-returning id, name, email, is_suspended
+const getStudentByEmail = `-- name: GetStudentByEmail :one
+select id, name, email, is_suspended
+from students
+where email = $1
 `
 
-func (q *Queries) DeleteStudent(ctx context.Context, id int32) (Student, error) {
-	row := q.db.QueryRow(ctx, deleteStudent, id)
+func (q *Queries) GetStudentByEmail(ctx context.Context, email string) (Student, error) {
+	row := q.db.QueryRow(ctx, getStudentByEmail, email)
 	var i Student
 	err := row.Scan(
 		&i.ID,
@@ -52,65 +52,14 @@ func (q *Queries) DeleteStudent(ctx context.Context, id int32) (Student, error) 
 	return i, err
 }
 
-const getAllStudents = `-- name: GetAllStudents :many
-
+const getStudentById = `-- name: GetStudentById :one
 select id, name, email, is_suspended
 from students
 where id = $1
 `
 
-func (q *Queries) GetAllStudents(ctx context.Context, id int32) ([]Student, error) {
-	rows, err := q.db.Query(ctx, getAllStudents, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Student
-	for rows.Next() {
-		var i Student
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Email,
-			&i.IsSuspended,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getStudentEmail = `-- name: GetStudentEmail :one
-select email
-from students
-where id = $1
-`
-
-func (q *Queries) GetStudentEmail(ctx context.Context, id int32) (string, error) {
-	row := q.db.QueryRow(ctx, getStudentEmail, id)
-	var email string
-	err := row.Scan(&email)
-	return email, err
-}
-
-const updateStudentEmail = `-- name: UpdateStudentEmail :one
-update students
-set email = $2
-where id = $1
-returning id, name, email, is_suspended
-`
-
-type UpdateStudentEmailParams struct {
-	ID    int32
-	Email string
-}
-
-func (q *Queries) UpdateStudentEmail(ctx context.Context, arg UpdateStudentEmailParams) (Student, error) {
-	row := q.db.QueryRow(ctx, updateStudentEmail, arg.ID, arg.Email)
+func (q *Queries) GetStudentById(ctx context.Context, id int32) (Student, error) {
+	row := q.db.QueryRow(ctx, getStudentById, id)
 	var i Student
 	err := row.Scan(
 		&i.ID,
@@ -119,6 +68,30 @@ func (q *Queries) UpdateStudentEmail(ctx context.Context, arg UpdateStudentEmail
 		&i.IsSuspended,
 	)
 	return i, err
+}
+
+const getStudentEmailsByIds = `-- name: GetStudentEmailsByIds :many
+SELECT email FROM students WHERE id = ANY($1)
+`
+
+func (q *Queries) GetStudentEmailsByIds(ctx context.Context, id int32) ([]string, error) {
+	rows, err := q.db.Query(ctx, getStudentEmailsByIds, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var email string
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateStudentSuspensionByEmail = `-- name: UpdateStudentSuspensionByEmail :one

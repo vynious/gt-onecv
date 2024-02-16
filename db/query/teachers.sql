@@ -5,25 +5,13 @@ values
     ($1 , $2)
     returning *;
 
+-- name: GetTeacherByEmail :one
+select *
+from teachers
+where email = $1;
 
--- name: GetAllTeachers :many
-
-
--- name: GetTeacher :one
+-- name: GetTeacherById :one
 select *
 from teachers
 where id = $1;
 
-
--- name: UpdateTeacherEmail :one
-update teachers
-set email = $2
-where id = $1
-returning *;
-
-
-
--- name: DeleteTeacher :one
-delete from teachers
-where id = $1
-returning *;

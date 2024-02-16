@@ -2,28 +2,25 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/vynious/gt-onecv/db"
 	"github.com/vynious/gt-onecv/domains/notifications"
-	"github.com/vynious/gt-onecv/domains/registration"
+	"github.com/vynious/gt-onecv/domains/registrations"
 	"github.com/vynious/gt-onecv/domains/students"
 	"log"
-	"net/http"
 	"os"
 )
 
 type Server struct {
 	Router *gin.Engine
-	rh     *registration.RegistrationHandler
+	rh     *registrations.RegistrationHandler
 	nh     *notifications.NotificationHandler
 	sh     *students.StudentHandler
 }
 
 func SpawnServer() *Server {
-	engine := gin.Default() // Initialize the Gin router
-
+	engine := gin.Default()
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("failed to connect to psql %v", err)
@@ -35,8 +32,8 @@ func SpawnServer() *Server {
 	studentService := students.SpawnStudentService(database)
 	studentHandler := students.SpawnStudentHandler(studentService)
 
-	registrationService := registration.SpawnRegistrationService(database)
-	registrationHandler := registration.SpawnRegistrationHandler(registrationService)
+	registrationService := registrations.SpawnRegistrationService(database)
+	registrationHandler := registrations.SpawnRegistrationHandler(registrationService)
 
 	return &Server{
 		Router: engine,
@@ -47,22 +44,15 @@ func SpawnServer() *Server {
 }
 
 func (s *Server) MountHandlers() {
-	api := s.router.Group("/api")
+	api := s.Router.Group("/api")
 
 	api.POST("/register", s.rh.RegisterStudents)
 	api.GET("/commonstudents", s.rh.ViewCommonStudentsUnderTeachers)
 	api.POST("/suspend", s.sh.SuspendStudent)
-	api.POST("/retrievefornotifications", s.nh.PublishNotification)
+	api.POST("/retrievefornotifications", s.nh.RetrieveStudentsForNotification)
 
 }
 
 func (s *Server) Start(addr string) error {
-	return s.router.Run(addr)
-}
-
-func (s *Server) Shutdown(ctx context.Context) error {
-	if httpServer, ok := s.router.(*http.Server); ok {
-		return httpServer.Shutdown(ctx)
-	}
-	return fmt.Errorf("router is not an *http.Server instance")
+	return s.Router.Run(addr)
 }

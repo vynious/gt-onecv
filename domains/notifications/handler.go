@@ -2,16 +2,13 @@ package notifications
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/vynious/gt-onecv/utils"
+	"log"
 	"net/http"
 )
 
 type NotificationHandler struct {
 	*NotificationService
-}
-
-type PublishNotificationRequest struct {
-	teacher      string
-	notification string
 }
 
 func SpawnNotificationHandler(ns *NotificationService) *NotificationHandler {
@@ -20,17 +17,26 @@ func SpawnNotificationHandler(ns *NotificationService) *NotificationHandler {
 	}
 }
 
-func (nh *NotificationHandler) PublishNotification(c *gin.Context) {
-	var requestBody PublishNotificationRequest
-	if err := c.BindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
+func (nh *NotificationHandler) RetrieveStudentsForNotification(c *gin.Context) {
+
+	var requestBody struct {
+		Teacher      string `json:"teacher"`
+		Notification string `json:"notification"`
 	}
-	teacherEmail := requestBody.teacher
-	content := requestBody.notification
+
+	if err := c.BindJSON(&requestBody); err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusBadRequest, utils.NewAPIError(utils.ErrInvalidRequestBody))
+		return
+	}
+	teacherEmail := requestBody.Teacher
+	content := requestBody.Notification
 
 	recipients, err := nh.GetNotifiableStudents(c.Request.Context(), teacherEmail, content)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		log.Println(err.Error())
+		c.JSON(http.StatusInternalServerError, utils.NewAPIError(err))
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"recipients": recipients})
 }

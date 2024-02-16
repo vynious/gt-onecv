@@ -29,61 +29,27 @@ func (q *Queries) CreateTeacher(ctx context.Context, arg CreateTeacherParams) (T
 	return i, err
 }
 
-const deleteTeacher = `-- name: DeleteTeacher :one
-delete from teachers
-where id = $1
-returning id, name, email
+const getTeacherByEmail = `-- name: GetTeacherByEmail :one
+select id, name, email
+from teachers
+where email = $1
 `
 
-func (q *Queries) DeleteTeacher(ctx context.Context, id int32) (Teacher, error) {
-	row := q.db.QueryRow(ctx, deleteTeacher, id)
+func (q *Queries) GetTeacherByEmail(ctx context.Context, email string) (Teacher, error) {
+	row := q.db.QueryRow(ctx, getTeacherByEmail, email)
 	var i Teacher
 	err := row.Scan(&i.ID, &i.Name, &i.Email)
 	return i, err
 }
 
-const getAllTeachers = `-- name: GetAllTeachers :many
-
-
+const getTeacherById = `-- name: GetTeacherById :one
 select id, name, email
 from teachers
 where id = $1
 `
 
-func (q *Queries) GetAllTeachers(ctx context.Context, id int32) ([]Teacher, error) {
-	rows, err := q.db.Query(ctx, getAllTeachers, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Teacher
-	for rows.Next() {
-		var i Teacher
-		if err := rows.Scan(&i.ID, &i.Name, &i.Email); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateTeacherEmail = `-- name: UpdateTeacherEmail :one
-update teachers
-set email = $2
-where id = $1
-returning id, name, email
-`
-
-type UpdateTeacherEmailParams struct {
-	ID    int32
-	Email string
-}
-
-func (q *Queries) UpdateTeacherEmail(ctx context.Context, arg UpdateTeacherEmailParams) (Teacher, error) {
-	row := q.db.QueryRow(ctx, updateTeacherEmail, arg.ID, arg.Email)
+func (q *Queries) GetTeacherById(ctx context.Context, id int32) (Teacher, error) {
+	row := q.db.QueryRow(ctx, getTeacherById, id)
 	var i Teacher
 	err := row.Scan(&i.ID, &i.Name, &i.Email)
 	return i, err

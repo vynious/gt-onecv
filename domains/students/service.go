@@ -2,9 +2,9 @@ package students
 
 import (
 	"context"
-	"fmt"
 	"github.com/vynious/gt-onecv/db"
 	"github.com/vynious/gt-onecv/db/sqlc"
+	"github.com/vynious/gt-onecv/utils"
 )
 
 type StudentService struct {
@@ -22,8 +22,9 @@ func (ss *StudentService) ChangeStudentSuspensionStatus(ctx context.Context, sEm
 		Email:       sEmail,
 		IsSuspended: suspend,
 	})
+
 	if err != nil {
-		return sqlc.Student{}, fmt.Errorf("failed to update suspension status %w", err)
+		return sqlc.Student{}, utils.ConvertToAPIError(err)
 	}
 	return student, nil
 }
