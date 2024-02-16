@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/vynious/gt-onecv/db"
 	"github.com/vynious/gt-onecv/domains/notifications"
 	"github.com/vynious/gt-onecv/domains/registrations"
@@ -21,7 +21,7 @@ type Server struct {
 
 func SpawnServer() *Server {
 	engine := gin.Default()
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	conn, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("failed to connect to psql %v", err)
 	}
