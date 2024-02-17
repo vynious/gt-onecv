@@ -8,10 +8,10 @@ import (
 )
 
 type NotificationService struct {
-	*db.Repository
+	db.IRepository
 }
 
-func SpawnNotificationService(db *db.Repository) *NotificationService {
+func SpawnNotificationService(db db.IRepository) *NotificationService {
 	return &NotificationService{
 		db,
 	}
@@ -19,11 +19,11 @@ func SpawnNotificationService(db *db.Repository) *NotificationService {
 
 func (ns *NotificationService) GetNotifiableStudents(ctx context.Context, teacherEmail, content string) ([]string, error) {
 
-	existingTeacher, err := ns.Queries.GetTeacherByEmail(ctx, teacherEmail)
+	existingTeacher, err := ns.GetTeacherByEmail(ctx, teacherEmail)
 	if err != nil {
 		return nil, utils.ErrTeacherNotFound
 	}
-	studentEmails, err := ns.Queries.GetNotSuspendedStudentEmailsUnderTeacherId(ctx, existingTeacher.ID)
+	studentEmails, err := ns.GetNotSuspendedStudentEmailsUnderTeacherId(ctx, existingTeacher.ID)
 	if err != nil {
 		return nil, utils.ErrStudentNotFound
 	}

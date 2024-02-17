@@ -8,17 +8,17 @@ import (
 )
 
 type StudentService struct {
-	*db.Repository
+	db.IRepository
 }
 
-func SpawnStudentService(db *db.Repository) *StudentService {
+func SpawnStudentService(db db.IRepository) *StudentService {
 	return &StudentService{
 		db,
 	}
 }
 
 func (ss *StudentService) ChangeStudentSuspensionStatus(ctx context.Context, sEmail string, suspend bool) (sqlc.Student, error) {
-	student, err := ss.Queries.UpdateStudentSuspensionByEmail(ctx, sqlc.UpdateStudentSuspensionByEmailParams{
+	student, err := ss.UpdateStudentSuspensionByEmail(ctx, sqlc.UpdateStudentSuspensionByEmailParams{
 		Email:       sEmail,
 		IsSuspended: suspend,
 	})

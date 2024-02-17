@@ -8,10 +8,10 @@ import (
 )
 
 type RegistrationService struct {
-	*db.Repository
+	db.IRepository
 }
 
-func SpawnRegistrationService(db *db.Repository) *RegistrationService {
+func SpawnRegistrationService(db db.IRepository) *RegistrationService {
 	return &RegistrationService{
 		db,
 	}
@@ -19,11 +19,11 @@ func SpawnRegistrationService(db *db.Repository) *RegistrationService {
 
 func (rs *RegistrationService) CreateRegistration(ctx context.Context, tEmail, sEmail string) error {
 
-	existingStudent, err := rs.Queries.GetStudentByEmail(ctx, sEmail)
+	existingStudent, err := rs.GetStudentByEmail(ctx, sEmail)
 	if err != nil {
 		return utils.ErrStudentNotFound
 	}
-	existingTeacher, err := rs.Queries.GetTeacherByEmail(ctx, tEmail)
+	existingTeacher, err := rs.GetTeacherByEmail(ctx, tEmail)
 	if err != nil {
 		return utils.ErrTeacherNotFound
 	}
@@ -33,7 +33,7 @@ func (rs *RegistrationService) CreateRegistration(ctx context.Context, tEmail, s
 		StudentID: existingStudent.ID,
 	}
 
-	_, err = rs.Queries.RegisterStudentUnderTeacher(ctx, arg)
+	_, err = rs.RegisterStudentUnderTeacher(ctx, arg)
 	if err != nil {
 		return utils.ConvertToAPIError(err)
 	}
@@ -42,11 +42,11 @@ func (rs *RegistrationService) CreateRegistration(ctx context.Context, tEmail, s
 }
 
 func (rs *RegistrationService) GetRegistrationsByTEmail(ctx context.Context, teacherEmail string) ([]string, error) {
-	existingTeacher, err := rs.Queries.GetTeacherByEmail(ctx, teacherEmail)
+	existingTeacher, err := rs.GetTeacherByEmail(ctx, teacherEmail)
 	if err != nil {
 		return nil, utils.ErrTeacherNotFound
 	}
-	students, err := rs.Queries.GetStudentsUnderTeacher(ctx, existingTeacher.ID)
+	students, err := rs.GetStudentsUnderTeacher(ctx, existingTeacher.ID)
 	if err != nil {
 		return nil, utils.ErrStudentNotFound
 	}
@@ -54,7 +54,7 @@ func (rs *RegistrationService) GetRegistrationsByTEmail(ctx context.Context, tea
 	var studentEmails []string
 
 	for _, studentId := range students {
-		student, err := rs.Queries.GetStudentById(ctx, studentId)
+		student, err := rs.GetStudentById(ctx, studentId)
 		if err != nil {
 			return nil, utils.ConvertToAPIError(err)
 		}
@@ -68,13 +68,13 @@ func (rs *RegistrationService) GetCommonRegistrationsByTEmails(ctx context.Conte
 	var totalEmails []string // Collect all emails across teachers
 
 	for _, teacherEmail := range teacherEmails {
-		teacher, err := rs.Queries.GetTeacherByEmail(ctx, teacherEmail)
+		teacher, err := rs.GetTeacherByEmail(ctx, teacherEmail)
 		if err != nil {
 			return nil, utils.ConvertToAPIError(err)
 		}
 
 		// directly fetch student emails for the teacher
-		studentEmails, err := rs.Queries.GetStudentEmailsByTeacherId(ctx, teacher.ID)
+		studentEmails, err := rs.GetStudentEmailsByTeacherId(ctx, teacher.ID)
 		if err != nil {
 			return nil, utils.ConvertToAPIError(err)
 		}
