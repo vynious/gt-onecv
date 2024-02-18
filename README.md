@@ -14,11 +14,16 @@ Implementing Golang API where which teachers can use to perform administrative f
 brew install goose
 
 # start psql server
-brew services start postgresql 
+brew services start postgresql
+
+# create database
+createdb <DATABASE_MAIN>
+createdb <DATABASE_TEST> 
 
 # create .env and include variables:
-# DATABASE_URL="" (main db)
-# DATABASE_TEST_URL=""(test db)
+# example:
+# DATABASE_URL="postgresql://shawntyw:shawntyw@localhost/gt-onecv?sslmode=disable" (main db) 
+# DATABASE_TEST_URL="postgresql://shawntyw:shawntyw@localhost/gt-onecv-test?sslmode=disable"(test db)
 touch .env
 ```
 

@@ -23,6 +23,7 @@ func (ns *NotificationService) GetNotifiableStudents(ctx context.Context, teache
 	if err != nil {
 		return nil, utils.ErrTeacherNotFound
 	}
+
 	studentEmails, err := ns.GetNotSuspendedStudentEmailsUnderTeacherId(ctx, existingTeacher.ID)
 	if err != nil {
 		return nil, utils.ErrStudentNotFound
